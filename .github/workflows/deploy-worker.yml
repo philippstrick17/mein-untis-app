@@ -13,7 +13,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Prüfen, ob Cloudflare-Secrets gesetzt sind
+        id: guard
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID nicht gesetzt - Worker-Deploy uebersprungen."
+          fi
+
       - name: Worker veröffentlichen
+        if: steps.guard.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           workingDirectory: worker
