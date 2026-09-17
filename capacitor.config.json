@@ -1,0 +1,16 @@
+{
+  "appId": "de.meinuntis.app",
+  "appName": "Mein Untis",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorCookies": {
+      "enabled": true
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

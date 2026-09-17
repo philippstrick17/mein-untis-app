@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mein Untis">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1220">
+<title>Mein Untis</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">M</span>
+      <div class="brand-text">
+        <h1>Mein Untis</h1>
+        <span class="school-name" id="schoolName">–</span>
+      </div>
+    </div>
+    <div class="week-actions">
+      <span class="week-label" id="weekLabel"></span>
+      <button class="btn ghost" id="todayBtn" type="button">Heute</button>
+    </div>
+    <div class="top-right">
+      <span class="status-dot" id="apiDot" title="Verbindung zum Server"></span>
+      <span class="status-dot ntfy" id="ntfyDot" title="Benachrichtigungen"></span>
+      <button class="icon" id="themeBtn" type="button" aria-label="Design wechseln" title="Design wechseln">◐</button>
+      <button class="icon" id="refreshBtn" type="button" aria-label="Aktualisieren" title="Aktualisieren">⟳</button>
+      <button class="icon" id="settingsBtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙</button>
+      <button class="icon" id="hwBtn" type="button" aria-label="Hausaufgaben" title="Hausaufgaben">✎</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <div id="view"></div>
+  </main>
+</div>
+
+<div id="loginScreen" hidden>
+  <div class="login-card">
+    <div class="brand center">
+      <span class="logo">M</span>
+      <div class="brand-text">
+        <h1>Mein Untis</h1>
+        <span class="school-name">Dein persönlicher Stundenplan</span>
+      </div>
+    </div>
+    <p class="login-intro">Melde dich mit deinen WebUntis-Zugangsdaten an, um deinen Stundenplan zu sehen.</p>
+    <form id="loginForm">
+      <label class="field">
+        <span>WebUntis-URL</span>
+        <input name="url" placeholder="https://deineschule.webuntis.com" autocomplete="url" required>
+      </label>
+      <label class="field">
+        <span>Schule (optional)</span>
+        <input name="school" placeholder="z. B. gymnasium" autocomplete="organization">
+      </label>
+      <fieldset class="fieldset">
+        <legend>Anmeldung</legend>
+        <label class="field">
+          <span>Benutzername</span>
+          <input name="username" autocomplete="username" required>
+        </label>
+        <label class="field">
+          <span>Passwort</span>
+          <input name="password" type="password" autocomplete="current-password" enterkeyhint="done" required>
+        </label>
+      </fieldset>
+      <label class="check">
+        <input type="checkbox" name="remember" checked>
+        <span>Zugangsdaten lokal speichern (für Benachrichtigungen)</span>
+      </label>
+      <button class="btn primary block" id="loginBtn" type="submit">Anmelden</button>
+      <p class="hint">Deine Zugangsdaten bleiben auf diesem Gerät gespeichert und werden ausschließlich an den WebUntis-Server deiner Schule gesendet.</p>
+      <div class="error" id="loginError" role="alert" hidden></div>
+    </form>
+  </div>
+</div>
+
+<div id="scrim" hidden></div>
+<aside id="settingsDrawer" hidden>
+  <div class="drawer-head">
+    <h2>Einstellungen</h2>
+    <button class="icon" id="closeSettings" type="button" aria-label="Einstellungen schließen" title="Schließen">✕</button>
+  </div>
+  <div class="drawer-body">
+    <section>
+      <h3>Anzeige</h3>
+      <label class="field">
+        <span>Design</span>
+        <select id="setTheme">
+          <option value="auto">Automatisch</option>
+          <option value="light">Hell</option>
+          <option value="dark">Dunkel</option>
+        </select>
+      </label>
+    </section>
+
+    <section>
+      <h3>Meine Kurse</h3>
+      <p class="hint">Wähle die Kurse, die du besuchst. In Zeitblöcken ohne deinen Kurs erscheint "Freistunde".</p>
+      <div class="btn-row">
+        <button class="btn ghost" id="selectAllCourses" type="button">Alle wählen</button>
+        <button class="btn ghost" id="selectNoneCourses" type="button">Keine wählen</button>
+      </div>
+      <input id="courseSearch" type="search" placeholder="Kurs suchen…" aria-label="Kurse durchsuchen">
+      <div id="courseSelect"></div>
+    </section>
+
+    <section>
+      <h3>WebUntis-Zugang</h3>
+      <label class="field">
+        <span>Server-URL</span>
+        <input id="setUrl" placeholder="https://deineschule.webuntis.com" autocomplete="url" inputmode="url">
+      </label>
+      <label class="field">
+        <span>Schule (optional)</span>
+        <input id="setSchool" placeholder="z. B. gymnasium" autocomplete="organization">
+      </label>
+      <label class="field">
+        <span>Benutzername</span>
+        <input id="setUsername" autocomplete="username">
+      </label>
+      <label class="field">
+        <span>Passwort (für neue Anmeldung)</span>
+        <input id="setPassword" type="password" autocomplete="current-password" enterkeyhint="done">
+      </label>
+      <button class="btn ghost block" id="reloginBtn" type="button">Neu anmelden</button>
+    </section>
+
+    <section>
+      <h3>Stundenplan-Quelle</h3>
+      <label class="field">
+        <span>Abrufmodus</span>
+        <select id="setTType">
+          <option value="auto">Automatisch (Schüler)</option>
+          <option value="manual">Manuell festlegen</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Elementtyp</span>
+        <select id="setEType">
+          <option value="student">Schüler</option>
+          <option value="class">Klasse</option>
+          <option value="teacher">Lehrer</option>
+          <option value="subject">Fach</option>
+          <option value="room">Raum</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Element-ID</span>
+        <input id="setEId" type="number" placeholder="z. B. 1234">
+      </label>
+      <p class="hint">Nur nötig, wenn die automatische Ermittlung deines Stundenplans fehlschlägt.</p>
+    </section>
+
+    <section>
+      <h3>Benachrichtigungen (ntfy)</h3>
+      <label class="check">
+        <input type="checkbox" id="setEnabled">
+        <span>Benachrichtigungen aktivieren</span>
+      </label>
+      <label class="field">
+        <span>ntfy-Server</span>
+        <input id="setHost" placeholder="https://ntfy.sh">
+      </label>
+      <label class="field">
+        <span>Topic (Abo)</span>
+        <input id="setTopic" placeholder="mein-untis-123456" autocomplete="off">
+      </label>
+      <p class="hint topic-hint" id="topicLink"></p>
+      <label class="field">
+        <span>Prüfintervall (Minuten)</span>
+        <input id="setInterval" type="number" min="5" max="1440">
+      </label>
+      <div class="btn-row">
+        <button class="btn ghost" id="ntfyTestBtn" type="button">Test senden</button>
+        <button class="btn ghost" id="ntfyCheckBtn" type="button">Jetzt prüfen</button>
+      </div>
+      <p class="hint" id="ntfyStatus"></p>
+      <button class="btn primary block" id="saveSettingsBtn" type="button">Speichern</button>
+    </section>
+    <p class="hint">Mein Untis · Version 1.0.0 (App)</p>
+  </div>
+</aside>
+
+<div id="lessonOverlay" hidden><div class="overlay-card"><button class="icon" id="overlayClose" type="button" aria-label="Schließen">✕</button><div id="overlayBody"></div></div></div>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="webuntis.js"></script>
+<script src="storage.js"></script>
+<script src="localapi.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
