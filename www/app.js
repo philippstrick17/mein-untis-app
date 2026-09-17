@@ -61,7 +61,9 @@
     const week = Math.ceil((((base - jan1) / 86400000) + jan1.getDay() + 1) / 7);
     const end = addDays(state.weekStart, 6);
     const p2 = (n) => String(n).padStart(2, "0");
-    return `KW ${week} · Heute, ${p2(state.weekStart.getDate())}.${p2(state.weekStart.getMonth() + 1)}. – ${p2(end.getDate())}.${p2(end.getMonth() + 1)}.${end.getFullYear()}`;
+    const isToday = toISO(state.weekStart) === toISO(new Date());
+    const prefix = isToday ? "Heute, " : "";
+    return `KW ${week} · ${prefix}${p2(state.weekStart.getDate())}.${p2(state.weekStart.getMonth() + 1)}. – ${p2(end.getDate())}.${p2(end.getMonth() + 1)}.${end.getFullYear()}`;
   };
 
   const subjectHue = (name) => {
@@ -133,6 +135,13 @@
     }
   }
 
+  function shiftWeek(days) {
+    if (!state.weekStart) state.weekStart = new Date();
+    state.weekStart = addDays(state.weekStart, days);
+    state.selected = null;
+    loadTimetable().catch((e) => toast(e.message, "err"));
+  }
+
   function bindViewActions() {
     $$("#view [data-action]").forEach((el) =>
       el.addEventListener("click", () => {
@@ -186,7 +195,10 @@
     if (l.teachers && l.teachers.length) meta.push(l.teachers.join(", "));
     const hasHw = state.homework.some((h) => h.done === false && h.subject === l.subject.short);
     const style = mobile ? `--hue:${hue}` : `top:${top}px;height:${height}px;--hue:${hue}`;
-    let html = `<div class="les ${statusCls}${mobile ? " mobile" : ""}" data-iso="${esc(l.date)}" data-sub="${esc(l.subject.short)}" data-open="1" style="${style}">`;
+    const ariaLabel = `${l.subject.long || l.subject.short}, ${fmtMin(l.start_time)} bis ${fmtMin(l.end_time)}${
+      l.status === "cancelled" ? ", entfällt" : l.status === "substitution" ? ", Vertretung" : ""
+    }`;
+    let html = `<div class="les ${statusCls}${mobile ? " mobile" : ""}" data-iso="${esc(l.date)}" data-sub="${esc(l.subject.short)}" data-open="1" tabindex="0" role="button" aria-label="${esc(ariaLabel)}" style="${style}">`;
     html += `<div class="les-time">${fmtMin(l.start_time)}–${fmtMin(l.end_time)}</div>`;
     html += `<div class="les-sub">${esc(l.subject.short)}</div>`;
     if (l.subject.long) html += `<div class="les-name">${esc(l.subject.long)}</div>`;
@@ -273,7 +285,7 @@
       const iso = toISO(date);
       const has = (days[iso] || []).length > 0 || (freistunden[iso] || []).length > 0;
       chips.push(
-        `<button class="chip ${iso === state.selected ? "active" : ""}${has ? " has" : ""}" data-iso="${iso}">${
+        `<button class="chip ${iso === state.selected ? "active" : ""}${has ? " has" : ""}" data-iso="${iso}" aria-pressed="${iso === state.selected ? "true" : "false"}" aria-label="${esc(WEEKDAYS_LONG[date.getDay()])}, ${String(date.getDate()).padStart(2, "0")}.${String(date.getMonth() + 1).padStart(2, "0")}.">${
           WEEKDAYS_LONG[date.getDay()].slice(0, 2)
         }<span>${String(date.getDate()).padStart(2, "0")}.${String(date.getMonth() + 1).padStart(2, "0")}.</span></button>`
       );
@@ -651,6 +663,14 @@
       if (del) deleteHomework(del.dataset.hwDel);
     });
 
+    $("#view").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const open = e.target.closest("[data-open]");
+      if (!open) return;
+      e.preventDefault();
+      openLessonDetail(open.dataset.sub);
+    });
+
     $("#view").addEventListener("change", (e) => {
       const check = e.target.closest("[data-hw-id]");
       if (check) toggleHomework(check.dataset.hwId, check.checked);
@@ -706,6 +726,8 @@
       state.selected = todayISO();
       loadTimetable().catch((e) => toast(e.message, "err"));
     });
+    $("#prevWeekBtn").addEventListener("click", () => shiftWeek(-7));
+    $("#nextWeekBtn").addEventListener("click", () => shiftWeek(7));
 
     $("#themeBtn").addEventListener("click", () => {
       const cur = document.documentElement.getAttribute("data-theme");

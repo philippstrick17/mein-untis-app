@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<a class="skip-link" href="#view">Zum Stundenplan springen</a>
 
 <div id="app" hidden>
   <header class="topbar">
@@ -26,13 +27,15 @@
         <span class="school-name" id="schoolName">–</span>
       </div>
     </div>
-    <div class="week-actions">
+    <div class="week-actions" role="group" aria-label="Wochen-Navigation">
+      <button class="icon" id="prevWeekBtn" type="button" aria-label="Vorherige Woche" title="Vorherige Woche">‹</button>
       <span class="week-label" id="weekLabel"></span>
       <button class="btn ghost" id="todayBtn" type="button">Heute</button>
+      <button class="icon" id="nextWeekBtn" type="button" aria-label="Nächste Woche" title="Nächste Woche">›</button>
     </div>
     <div class="top-right">
-      <span class="status-dot" id="apiDot" title="Verbindung zum Server"></span>
-      <span class="status-dot ntfy" id="ntfyDot" title="Benachrichtigungen"></span>
+      <span class="status-dot" id="apiDot" title="Verbindung zum Server" role="img" aria-label="Verbindungsstatus"></span>
+      <span class="status-dot ntfy" id="ntfyDot" title="Benachrichtigungen" role="img" aria-label="Benachrichtigungsstatus"></span>
       <button class="icon" id="themeBtn" type="button" aria-label="Design wechseln" title="Design wechseln">◐</button>
       <button class="icon" id="refreshBtn" type="button" aria-label="Aktualisieren" title="Aktualisieren">⟳</button>
       <button class="icon" id="settingsBtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙</button>
@@ -40,8 +43,8 @@
     </div>
   </header>
 
-  <main class="layout">
-    <div id="view"></div>
+  <main class="layout" aria-label="Stundenplan">
+    <div id="view" aria-live="polite"></div>
   </main>
 </div>
 
@@ -87,9 +90,9 @@
 </div>
 
 <div id="scrim" hidden></div>
-<aside id="settingsDrawer" hidden>
+<aside id="settingsDrawer" hidden role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
   <div class="drawer-head">
-    <h2>Einstellungen</h2>
+    <h2 id="settingsTitle">Einstellungen</h2>
     <button class="icon" id="closeSettings" type="button" aria-label="Einstellungen schließen" title="Schließen">✕</button>
   </div>
   <div class="drawer-body">
@@ -193,7 +196,7 @@
   </div>
 </aside>
 
-<div id="lessonOverlay" hidden><div class="overlay-card"><button class="icon" id="overlayClose" type="button" aria-label="Schließen">✕</button><div id="overlayBody"></div></div></div>
+<div id="lessonOverlay" role="dialog" aria-modal="true" aria-label="Fachdetails" hidden><div class="overlay-card"><button class="icon" id="overlayClose" type="button" aria-label="Schließen">✕</button><div id="overlayBody"></div></div></div>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
