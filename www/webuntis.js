@@ -338,6 +338,20 @@
       else delete this.jar[name];
     }
   };
+  CookieJar.prototype.load = function (raw) {
+    if (!raw) return;
+    var parts = String(raw).split(";");
+    for (var i = 0; i < parts.length; i++) {
+      var first = parts[i].trim();
+      var idx = first.indexOf("=");
+      if (idx <= 0) continue;
+      var name = first.slice(0, idx).trim();
+      var value = first.slice(idx + 1).trim();
+      if (!name) continue;
+      if (value) this.jar[name] = value;
+      else delete this.jar[name];
+    }
+  };
   CookieJar.prototype.header = function () {
     var self = this;
     return Object.keys(this.jar)
@@ -346,6 +360,21 @@
       })
       .join("; ");
   };
+
+  // CORS-Proxy (Cloudflare Worker) für den Browserbetrieb/PWA.
+  function proxyBase() {
+    var cfg = global.MU_CONFIG || {};
+    return String(cfg.proxyBase || "").replace(/\/+$/, "");
+  }
+
+  function isWebUntisUrl(url) {
+    try {
+      var host = new URL(url, "https://example.invalid").hostname;
+      return /(^|\.)webuntis\.(com|de|at|ch|org|info)$/i.test(host);
+    } catch (e) {
+      return false;
+    }
+  }
 
   function responseText(res) {
     if (res.data === null || res.data === undefined) return "";
@@ -388,6 +417,24 @@
       return capHttp.request(capOptions).then(function (res) {
         if (jar && res.headers) jar.store(res.headers["set-cookie"] || res.headers["Set-Cookie"]);
         return { status: res.status, headers: res.headers || {}, data: res.data, text: responseText(res) };
+      });
+    }
+
+    var base = proxyBase();
+    if (base && isWebUntisUrl(url)) {
+      delete headers["Cookie"];
+      if (jar) {
+        var jarCookie = jar.header();
+        if (jarCookie) headers["X-MU-Cookie"] = jarCookie;
+      }
+      var proxyUrl = base + "/?url=" + encodeURIComponent(url);
+      var proxyInit = { method: method, headers: headers };
+      if (body !== undefined && body !== null) proxyInit.body = body;
+      return fetch(proxyUrl, proxyInit).then(function (res) {
+        if (jar) jar.load(res.headers.get("x-mu-cookie"));
+        return res.text().then(function (text) {
+          return { status: res.status, headers: {}, data: text, text: text };
+        });
       });
     }
 

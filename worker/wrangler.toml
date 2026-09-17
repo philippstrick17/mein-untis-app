@@ -1,0 +1,9 @@
+name = "mein-untis-proxy"
+main = "src/index.js"
+compatibility_date = "2025-09-23"
+
+# Erlaubte Ziel-Hosts (WebUntis-Server) und Ursprungs-Webseiten (PWA).
+# Anpassen, falls ein anderer WebUntis-Host oder eine eigene Domain genutzt wird.
+[vars]
+ALLOWED_HOSTS = "webuntis.com,webuntis.de,webuntis.at,webuntis.ch"
+ALLOWED_ORIGINS = "https://philippstrick17.github.io,http://localhost,http://127.0.0.1"
