@@ -8,5 +8,5 @@
 // Nach dem Worker-Deploy hier die eigene URL eintragen, z. B.:
 //   proxyBase: "https://mein-untis-proxy.dein-name.workers.dev"
 window.MU_CONFIG = {
-  proxyBase: "",
+  proxyBase: "https://mein-untis-proxy.philipp-c9a.workers.dev",
 };
